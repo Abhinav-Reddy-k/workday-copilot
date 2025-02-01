@@ -9,3 +9,8 @@ export const saveData = async (key: string, data: string) => {
 export const getData = async (key: string) => {
   return await storage.getItem<string>(`local:${key}`);
 };
+
+// write a function to remove data from chrome.storage with specific key
+export const clearData = async (key: string) => {
+  await storage.removeItem(`local:${key}`);
+};

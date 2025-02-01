@@ -1,90 +1,513 @@
 import { useState, useEffect } from "react";
-import { getData, saveData } from "@/utils/storageUtil";
+import {
+  Layout,
+  Menu,
+  Typography,
+  Input,
+  Button,
+  Progress,
+  Switch,
+  Space,
+  Modal,
+  Card,
+  theme,
+  message,
+  Tooltip,
+  Spin,
+} from "antd";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  SaveOutlined,
+  DeleteOutlined,
+  SunOutlined,
+  MoonOutlined,
+  ExclamationCircleOutlined,
+  InfoCircleOutlined,
+  UserOutlined,
+  ToolOutlined,
+  TrophyOutlined,
+  ProjectOutlined,
+  ReadOutlined,
+  SafetyCertificateOutlined,
+  FileTextOutlined,
+  IdcardOutlined,
+  EllipsisOutlined,
+  LoadingOutlined,
+} from "@ant-design/icons";
+import { saveData, getData, clearData } from "@/utils/storageUtil";
 
-const Editor = () => {
-  const [userData, setUserData] = useState(""); // Store the input data
-  const [savedData, setSavedData] = useState(""); // Store the saved data (loaded from localStorage)
+const { Sider, Content } = Layout;
+const { Title, Text } = Typography;
+const { TextArea } = Input;
+const { useToken } = theme;
 
-  // Load existing user data from localStorage
+type SectionState = Record<string, string>;
+
+// Map sections to icons
+const sectionIcons: Record<string, React.ReactNode> = {
+  Personal_Information: <UserOutlined />,
+  Skills: <ToolOutlined />,
+  Experience: <TrophyOutlined />,
+  Projects: <ProjectOutlined />,
+  Education: <ReadOutlined />,
+  Certifications: <SafetyCertificateOutlined />,
+  Voluntary_Disclosures: <FileTextOutlined />,
+  Self_Identify: <IdcardOutlined />,
+  Miscellaneous: <EllipsisOutlined />,
+};
+
+const exampleVoluntaryDisclosures = `Race/Ethnicity:
+  Q1: Are you Hispanic/Latino?
+  A1: No
+  Q2: What is your race? (Select all that apply)
+  A2: Asian
+  Q3: Do you wish to decline to provide this information?
+  A3: No
+
+Gender:
+  Q1: What is your gender?
+  A1: Male
+  Q2: Do you wish to decline to provide this information?
+  A2: No`;
+
+const exampleSelfIdentify = `Veteran Status:
+  Q1: Do you identify as a veteran?
+  A1: No, I,m not a protected veteran
+  Q3: Do you wish to decline to provide this information?
+  A3: No
+
+Disability Status:
+  Q1: Do you have a disability (or a history of a disability)?
+  A1: No
+  Q2: Do you wish to decline to provide this information?
+  A2: Yes`;
+
+const WorkdayCopilot = () => {
+  const [sections, setSections] = useState<SectionState>({
+    Personal_Information: "",
+    Skills: "",
+    Experience: "",
+    Projects: "",
+    Education: "",
+    Certifications: "",
+    Voluntary_Disclosures: ``,
+    Self_Identify: "",
+    Miscellaneous: "",
+  });
+  const [activeSection, setActiveSection] = useState("Personal_Information");
+  const [darkMode, setDarkMode] = useState(false);
+  const [saved, setSaved] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const { token } = useToken();
+
+  // Load initial data
   useEffect(() => {
-    async function fetchData() {
-      const data = await getData("userData");
-      setSavedData(data || "");
-    }
-    console.log("fetching data");
-    fetchData();
+    const loadData = async () => {
+      try {
+        const savedData = await getData("userData");
+        if (savedData) {
+          const parsedSections = parseSections(savedData);
+          // Check if Voluntary Disclosures and Self Identify sections are empty
+          if (!parsedSections["Voluntary_Disclosures"]) {
+            parsedSections["Voluntary_Disclosures"] =
+              exampleVoluntaryDisclosures;
+          }
+          if (!parsedSections["Self_Identify"]) {
+            parsedSections["Self_Identify"] = exampleSelfIdentify;
+          }
+
+          setSections(parsedSections);
+        }
+
+        // Load theme preference
+        const savedTheme = await getData("editorTheme");
+        if (savedTheme) {
+          setDarkMode(savedTheme === "dark");
+        }
+
+        setLoading(false);
+      } catch (error) {
+        message.error("Failed to load saved data");
+        setLoading(false);
+      }
+    };
+    loadData();
   }, []);
 
-  // Handle saving the user data
-  const handleSaveData = async () => {
-    if (userData.trim()) {
-      await saveData("userData", userData);
-      setSavedData(userData);
-      alert("Data saved successfully!");
-    } else {
-      alert("Please enter some data before saving.");
+  // Auto-save on Ctrl+S
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "s") {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [sections]);
+
+  const parseSections = (formattedText: string): SectionState => {
+    const lines = formattedText.split("\n");
+    const parsedSections: SectionState = {};
+    let currentSection: string | null = null;
+    let sectionsFound: string[] = [];
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (!trimmedLine) continue;
+
+      if (Object.keys(sections).includes(trimmedLine)) {
+        currentSection = trimmedLine;
+        sectionsFound.push(trimmedLine);
+        parsedSections[currentSection] = "";
+        continue;
+      }
+
+      if (currentSection) {
+        parsedSections[currentSection] += `${line}\n`;
+      }
+    }
+
+    // Initialize empty sections for any missing ones
+    Object.keys(sections).forEach((section) => {
+      if (!sectionsFound.includes(section)) {
+        parsedSections[section] = "";
+      }
+    });
+
+    return parsedSections;
+  };
+
+  const calculateProgress = () => {
+    const filledSections = Object.values(sections).filter(
+      (content) => content.trim().length > 0
+    ).length;
+    return Math.round((filledSections / Object.keys(sections).length) * 100);
+  };
+
+  const handleSave = async () => {
+    try {
+      const combinedData = Object.entries(sections)
+        .map(
+          ([sectionName, sectionContent]) =>
+            `${sectionName}\n${sectionContent.trim()}`
+        )
+        .join("\n\n");
+      await saveData("userData", combinedData);
+      setSaved(true);
+      message.success("Changes saved successfully!");
+    } catch (error) {
+      message.error("Failed to save changes");
     }
   };
 
+  const toggleTheme = async () => {
+    try {
+      const newTheme = !darkMode ? "dark" : "light";
+      await saveData("editorTheme", newTheme);
+      setDarkMode(!darkMode);
+    } catch (error) {
+      message.error("Failed to save theme preference");
+    }
+  };
+
+  const showClearConfirm = () => {
+    Modal.confirm({
+      title: "Clear all content?",
+      icon: <ExclamationCircleOutlined />,
+      content: "This action cannot be undone. All sections will be cleared.",
+      okText: "Clear All",
+      okType: "danger",
+      cancelText: "Cancel",
+      async onOk() {
+        try {
+          await clearData("userData");
+          setSections(
+            Object.fromEntries(Object.keys(sections).map((key) => [key, ""]))
+          );
+          setSaved(true);
+          message.success("All content cleared");
+        } catch (error) {
+          message.error("Failed to clear data");
+        }
+      },
+    });
+  };
+
+  const getWordCount = (text: string) =>
+    text.trim().split(/\s+/).filter(Boolean).length;
+  const getCharCount = (text: string) => text.length;
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          background: darkMode ? token.colorBgContainer : "#f0f2f5",
+        }}
+      >
+        <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+      </div>
+    );
+  }
+
   return (
-    <div
-      style={{
-        padding: 16,
-        fontFamily: "Arial, sans-serif",
-        maxWidth: 600,
-        margin: "0 auto",
-      }}
-    >
-      <h1>Editor: Workday AutoFiller</h1>
-      <textarea
-        style={{
-          width: "100%",
-          height: 300,
-          padding: 10,
-          fontSize: 14,
-          borderRadius: 4,
-          border: "1px solid #ccc",
-          marginBottom: 16,
-        }}
-        value={userData || savedData} // Display current user input or saved data
-        onChange={(e) => {
-          console.log(e.target.value);
-          setUserData(e.target.value ? e.target.value : "Please input data"); // Update the user input
-        }} // Update the user input
-      />
-      <br />
-      <button
-        onClick={handleSaveData}
-        style={{
-          width: "100%",
-          padding: 10,
-          backgroundColor: "#4CAF50",
-          color: "white",
-          border: "none",
-          borderRadius: 4,
-          cursor: "pointer",
-        }}
+    <Layout style={{ minHeight: "100vh" }}>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        style={{ width: "100%" }}
       >
-        Save Data
-      </button>
-      <br />
-      <button
-        onClick={() => window.close()} // Close the editor window
-        style={{
-          width: "100%",
-          padding: 10,
-          backgroundColor: "#FF5722",
-          color: "white",
-          border: "none",
-          borderRadius: 4,
-          cursor: "pointer",
-          marginTop: 10,
-        }}
-      >
-        Close Editor
-      </button>
-    </div>
+        <Layout
+          style={{
+            background: darkMode ? token.colorBgContainer : "#f0f2f5",
+            minHeight: "100vh",
+            padding: "0.5rem",
+          }}
+        >
+          {/* Header Section */}
+          <Card
+            style={{
+              marginBottom: "0.5rem",
+              background: darkMode ? "#141414" : "#fff",
+              borderRadius: "8px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div>
+                <Title
+                  level={2}
+                  style={{ margin: 0, color: darkMode ? "#fff" : undefined }}
+                >
+                  Workday Copilot
+                </Title>
+                <Text
+                  type="secondary"
+                  style={{ color: darkMode ? "#999" : undefined }}
+                >
+                  Complete your profile sections below
+                </Text>
+              </div>
+              <Space size="middle">
+                <Tooltip
+                  title={
+                    saved ? "All changes saved" : "You have unsaved changes"
+                  }
+                >
+                  <InfoCircleOutlined
+                    style={{
+                      color: saved ? "#52c41a" : "#faad14",
+                      fontSize: 16,
+                    }}
+                  />
+                </Tooltip>
+                <Switch
+                  checked={darkMode}
+                  onChange={toggleTheme}
+                  checkedChildren={<MoonOutlined />}
+                  unCheckedChildren={<SunOutlined />}
+                />
+              </Space>
+            </div>
+
+            {/* Progress Section */}
+            <div style={{ marginTop: "1rem" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                <Text style={{ color: darkMode ? "#999" : undefined }}>
+                  Profile Completion
+                </Text>
+                <Text strong style={{ color: darkMode ? "#fff" : undefined }}>
+                  {calculateProgress()}%
+                </Text>
+              </div>
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Progress
+                  percent={calculateProgress()}
+                  strokeColor={{
+                    "0%": "#108ee9",
+                    "100%": "#87d068",
+                  }}
+                  showInfo={false}
+                />
+              </motion.div>
+            </div>
+          </Card>
+
+          {/* Main Content */}
+          <Layout
+            style={{
+              background: "transparent",
+              display: "flex",
+              flexDirection: "row",
+              height: "calc(100vh - 200px)",
+            }}
+          >
+            {/* Sidebar */}
+            <Sider
+              width={300}
+              style={{
+                background: "transparent",
+                marginRight: "2rem",
+                height: "100%",
+              }}
+            >
+              <Card
+                style={{
+                  background: darkMode ? "#141414" : "#fff",
+                  borderRadius: "8px",
+                  height: "100%",
+                }}
+              >
+                <Menu
+                  mode="inline"
+                  selectedKeys={[activeSection]}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                  }}
+                  onClick={({ key }) => setActiveSection(key)}
+                >
+                  {Object.keys(sections).map((section) => (
+                    <Menu.Item
+                      key={section}
+                      icon={sectionIcons[section]}
+                      style={{
+                        color: darkMode ? "#fff" : undefined,
+                      }}
+                    >
+                      {section.replace(/_/g, " ")}
+                    </Menu.Item>
+                  ))}
+                </Menu>
+              </Card>
+            </Sider>
+
+            {/* Content Area */}
+            <Content style={{ height: "100%" }}>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeSection}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.2 }}
+                  style={{ height: "90%" }}
+                >
+                  <Card
+                    title={
+                      <Space>
+                        {sectionIcons[activeSection]}
+                        {activeSection.replace(/_/g, " ")}
+                      </Space>
+                    }
+                    style={{
+                      background: darkMode ? "#141414" : "#fff",
+                      borderRadius: "8px",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
+                    <div
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                      }}
+                    >
+                      <TextArea
+                        value={sections[activeSection]}
+                        onChange={(e) => {
+                          setSaved(false);
+                          setSections((prev) => ({
+                            ...prev,
+                            [activeSection]: e.target.value,
+                          }));
+                        }}
+                        placeholder={`Enter your ${activeSection
+                          .toLowerCase()
+                          .replace(/_/g, " ")}...`}
+                        autoSize={{ minRows: 13 }}
+                        style={{
+                          flex: 1,
+                          background: darkMode ? "#1f1f1f" : "#fff",
+                          color: darkMode ? "#fff" : undefined,
+                          border: darkMode ? "1px solid #434343" : undefined,
+                          resize: "none",
+                        }}
+                      />
+                      <div
+                        style={{
+                          marginTop: "0.5rem",
+                          fontSize: "12px",
+                          color: darkMode ? "#999" : "#666",
+                        }}
+                      >
+                        Words: {getWordCount(sections[activeSection])} |
+                        Characters: {getCharCount(sections[activeSection])}
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+
+                {/* Action Buttons */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    marginTop: "1rem",
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    gap: "1rem",
+                  }}
+                >
+                  <Tooltip title="Clear all sections (Ctrl+Del)">
+                    <Button
+                      icon={<DeleteOutlined />}
+                      onClick={showClearConfirm}
+                      danger
+                    >
+                      Clear All
+                    </Button>
+                  </Tooltip>
+                  <Tooltip title="Save changes (Ctrl+S)">
+                    <Button
+                      type="primary"
+                      icon={<SaveOutlined />}
+                      onClick={handleSave}
+                      disabled={saved}
+                    >
+                      Save Changes
+                    </Button>
+                  </Tooltip>
+                </motion.div>
+              </AnimatePresence>
+            </Content>
+          </Layout>
+        </Layout>
+      </motion.div>
+    </Layout>
   );
 };
 
-export default Editor;
+export default WorkdayCopilot;

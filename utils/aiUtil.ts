@@ -17,24 +17,21 @@ export enum LLM {
 export const model = LLM.HermesLlama;
 
 export async function generateTextBasedOnResume(prompt: string) {
-  console.log("Generating text with prompt:", prompt);
   const savedData = await getData("userData");
   const resumeData = `User's resume data: ${JSON.stringify(savedData)}`;
   const response = await openai.completions.create({
     model,
     prompt: `${resumeData}\n${prompt}`,
   });
-  console.log("Generated text:", response.choices[0].text);
   return response.choices[0].text; // Output the generated text
 }
 
 export async function generateText(prompt: string) {
-  console.log("Generating text with prompt:", prompt);
   const response = await openai.completions.create({
     model,
     prompt,
+    max_tokens: 1000,
   });
-  console.log("Generated text:", response.choices[0].text);
   return response.choices[0].text; // Output the generated text
 }
 

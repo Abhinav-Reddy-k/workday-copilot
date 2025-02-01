@@ -8,6 +8,7 @@ import { handleDateInput } from "./dateInput";
 
 let maxRetryCountForCurrentPage = 3;
 let saveButtonDataAutomationId: string | null = null;
+let progressOnCurrentPage = 0;
 
 /**
  * Analyzes page fields and processes them based on their types and attributes.
@@ -18,6 +19,8 @@ async function analyzePageFields(hasError: boolean = false): Promise<void> {
     const labels = Array.from(
       document.querySelectorAll<HTMLLabelElement>("label")
     );
+
+    let currentLabel = 0;
 
     const isDateInput = document.querySelector<HTMLElement>(
       '[data-automation-id="dateIcon"]'
@@ -41,8 +44,11 @@ async function analyzePageFields(hasError: boolean = false): Promise<void> {
 
       await processInputElement(inputElement, labelText, hasError);
       delay(1000);
+      // update current page progress after processing each input based on number of labels processed
+      currentLabel++;
+      progressOnCurrentPage = (currentLabel / labels.length) * 100;
     }
-
+    progressOnCurrentPage = 100;
     await handleNavigation();
   } catch (error) {
     console.error("Error analyzing page fields:", error);
@@ -185,14 +191,6 @@ async function processFieldsets(hasError: boolean): Promise<void> {
 export default defineContentScript({
   matches: ["https://*.myworkdayjobs.com/*"],
   main() {
-    const sandboxIframe = document.createElement("iframe");
-    sandboxIframe.src = chrome.runtime.getURL("sandbox.html");
-    sandboxIframe.sandbox.add("allow-scripts"); // Add both permissions
-    sandboxIframe.style.display = "none";
-    document.body.appendChild(sandboxIframe);
-
-    showAiUpdates();
-
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.action === "analyzeFields") {
         analyzePageFields()
@@ -203,6 +201,19 @@ export default defineContentScript({
         return true;
       }
     });
+
+    // send updates on current progress to sidepanel
+    setInterval(() => {
+      const overallProgress = calculateOverallPercentage(
+        getProgress(getProgressBarStep()),
+        progressOnCurrentPage
+      )?.toFixed(1);
+      overallProgress &&
+        chrome.runtime.sendMessage({
+          action: "updateOverallProgress",
+          overallProgress,
+        });
+    }, 1000);
   },
 });
 
@@ -275,32 +286,30 @@ async function getCorrectDataAutomationId(): Promise<string | null> {
   }
 }
 
-const showAiUpdates = () => {
-  const statusContainer = document.createElement("div");
-  statusContainer.id = "ai-status-container";
-  statusContainer.style.position = "fixed";
-  statusContainer.style.bottom = "20px";
-  statusContainer.style.left = "20px";
-  statusContainer.style.width = "300px";
-  statusContainer.style.backgroundColor = "#f9fafb";
-  statusContainer.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
-  statusContainer.style.border = "1px solid #e5e7eb";
-  statusContainer.style.borderRadius = "8px";
-  statusContainer.style.padding = "16px";
-  statusContainer.style.fontFamily = "Arial, sans-serif";
-  statusContainer.style.fontSize = "14px";
-  statusContainer.style.zIndex = "1000";
+function getProgress(text: string): number | null {
+  const match = text.match(/\d+/g);
+  if (match && match[0] && match[1]) {
+    const current = parseInt(match[0], 10);
+    const total = parseInt(match[1], 10);
+    const percentage = total === 0 ? null : (current / total) * 100; // Avoid division by zero
+    return percentage;
+  }
+  return null;
+}
 
-  const statusHeader = document.createElement("div");
-  statusHeader.style.fontWeight = "bold";
-  statusHeader.style.marginBottom = "8px";
-  statusHeader.textContent = "AI Status";
+function calculateOverallPercentage(
+  workflowPercentage: number | null,
+  pagePercentage: number | null
+): number | null {
+  if (workflowPercentage === null || pagePercentage === null) {
+    return null; // Handle cases where percentage data is missing
+  }
 
-  const statusContent = document.createElement("div");
-  statusContent.id = "ai-status-content";
-  statusContent.textContent = "Initializing...";
+  const workflowWeight = 0.7;
+  const pageWeight = 1 - workflowWeight;
 
-  statusContainer.appendChild(statusHeader);
-  statusContainer.appendChild(statusContent);
-  document.body.appendChild(statusContainer);
-};
+  const overallPercentage =
+    workflowWeight * workflowPercentage + pageWeight * pagePercentage;
+
+  return overallPercentage;
+}

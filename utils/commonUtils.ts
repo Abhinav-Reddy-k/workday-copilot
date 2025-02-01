@@ -120,35 +120,146 @@ export function getTextContentAbove(inputElement: HTMLInputElement): string {
   return textContent.trim();
 }
 
-function simulateTypingV2(
-  element: HTMLElement,
-  text: string,
-  callback: () => void
-) {
-  element.innerHTML = ""; // Clear the content
-  let index = 0;
-
-  const typingInterval = setInterval(() => {
-    if (index < text.length) {
-      element.innerHTML += text[index];
-      index++;
-    } else {
-      clearInterval(typingInterval);
-      callback();
-    }
-  }, 10); // Adjust typing speed here
+export function updateStatus(action: string, reason: string, value: string) {
+  console.log(`Updating status: ${action} - ${reason} - ${value}`);
+  chrome.runtime.sendMessage({
+    action: "updateStatus",
+    payload: { action, reason, value },
+  });
 }
 
-// Function to update the status UI with typing simulation
-export function updateStatus(action: string, reason: string, value: string) {
-  const statusContent = document.querySelector(
-    "#ai-status-content"
-  ) as HTMLElement;
-  if (statusContent) {
-    const fullText = `
-        ${action}
-         ${reason}
-      `;
-    simulateTypingV2(statusContent, fullText, () => {});
+export const sectionHeadings: Record<string, string[]> = {
+  Personal_Information: [
+    "PERSONAL INFORMATION",
+    "CONTACT INFORMATION",
+    "BIOGRAPHY",
+    "ABOUT ME",
+    "PROFILE",
+    "SUMMARY",
+    "OBJECTIVE",
+  ],
+  Skills: [
+    "SKILLS",
+    "TECHNICAL SKILLS",
+    "SOFT SKILLS",
+    "HARD SKILLS",
+    "CORE COMPETENCIES",
+    "TOOLS & TECHNOLOGIES",
+    "PROGRAMMING LANGUAGES",
+  ],
+  Experience: [
+    "WORK EXPERIENCE",
+    "EXPERIENCE",
+    "INTERNSHIPS",
+    "PROFESSIONAL EXPERIENCE",
+    "EMPLOYMENT HISTORY",
+    "CAREER HISTORY",
+    "RELEVANT EXPERIENCE",
+    "FREELANCE EXPERIENCE",
+    "PROJECT EXPERIENCE",
+  ],
+  Projects: [
+    "PROJECTS",
+    "PERSONAL PROJECTS",
+    "SIDE PROJECTS",
+    "SIGNIFICANT PROJECTS",
+    "TECHNICAL PROJECTS",
+    "OPEN SOURCE CONTRIBUTIONS",
+  ],
+  Education: [
+    "EDUCATION",
+    "ACADEMIC BACKGROUND",
+    "EDUCATIONAL QUALIFICATIONS",
+    "DEGREES",
+    "COURSEWORK",
+  ],
+  Certifications: [
+    "CERTIFICATIONS",
+    "LICENSES",
+    "PROFESSIONAL DEVELOPMENT",
+    "TRAININGS",
+    "CREDENTIALS",
+  ],
+  Achievements: [
+    "ACHIEVEMENTS",
+    "AWARDS",
+    "HONORS",
+    "ACCOLADES",
+    "RECOGNITION",
+    "DISTINCTIONS",
+  ],
+  Publications: [
+    "PUBLICATIONS",
+    "RESEARCH PAPERS",
+    "CONFERENCE PRESENTATIONS",
+    "JOURNAL ARTICLES",
+    "WHITE PAPERS",
+    "BOOKS & CHAPTERS",
+  ],
+  Voluntary_Disclosures: ["VOLUNTARY DISCLOSURES"],
+  Self_Identify: ["SELF IDEMTIFY", "PRONOUNS"],
+  Miscellaneous: [
+    "MISCELLANEOUS",
+    "ADDITIONAL INFORMATION",
+    "EXTRA INFORMATION",
+    "OTHER DETAILS",
+    "REFERENCES",
+    "PORTFOLIO",
+    "BLOG",
+  ],
+};
+
+export function formatResume(resumeText: string): string {
+  const lines = resumeText.split("\n");
+  let formattedText = "";
+  let currentSection: string | null = null;
+  let completedSections: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+
+    // Skip empty lines
+    if (line === "") continue;
+
+    // Detect section headings dynamically and assume only less than 3 words exist on that line
+    for (const [formattedHeading, variations] of Object.entries(
+      sectionHeadings
+    )) {
+      if (
+        variations.some((heading) => line.toUpperCase().startsWith(heading)) &&
+        !completedSections.includes(formattedHeading) &&
+        line.split(" ").length < 3
+      ) {
+        currentSection = formattedHeading;
+        formattedText += `\n${formattedHeading}\n`;
+        // replace the heading with the formatted heading
+        line = line.replace(new RegExp(`^(${variations.join("|")})`), "");
+        completedSections.push(formattedHeading);
+        break;
+      }
+    }
+
+    if (/^[•\-]/.test(line)) {
+      // Detect bullet points using • or -
+      formattedText += `• ${line.replace(/^[•\-]/, "").trim()}\n`;
+    } else if (currentSection === null) {
+      // First few lines are assumed to be contact information or a summary
+      if (i < 5) {
+        formattedText += `Personal_Information\n${line}\n`;
+        currentSection = "Personal_Information";
+      } else {
+        formattedText += `\nMiscellaneous\n${line}\n`;
+        currentSection = "Miscellaneous";
+      }
+    } else {
+      // Inside a section, maintain line structure while preventing excessive newlines
+      if (line !== "") {
+        formattedText += `${line}\n`;
+      } else if (lines[i + 1]?.trim() !== "") {
+        formattedText += `\n`; // Add a newline only if the next line is not empty
+      }
+    }
   }
+
+  return formattedText.trim();
 }
