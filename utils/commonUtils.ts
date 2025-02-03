@@ -146,6 +146,7 @@ export const sectionHeadings: Record<string, string[]> = {
     "CORE COMPETENCIES",
     "TOOLS & TECHNOLOGIES",
     "PROGRAMMING LANGUAGES",
+    "PROFESSIONAL SUMMARY",
   ],
   Experience: [
     "WORK EXPERIENCE",

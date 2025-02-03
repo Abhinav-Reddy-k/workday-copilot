@@ -12,8 +12,9 @@ import {
   Upload,
   message,
   Input,
+  Layout,
 } from "antd";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   CheckCircleTwoTone,
   CloseCircleTwoTone,
@@ -25,10 +26,13 @@ import {
 import Lottie from "lottie-react";
 import scanningAnimation from "../../animations/scanning.json";
 import successAnimation from "../../animations/success.json";
+import failureAnimation from "../../animations/failure.json";
 import mammoth from "mammoth";
 import { saveData, getData } from "@/utils/storageUtil";
 import { formatResume } from "@/utils/commonUtils";
 import Typewriter from "typewriter-effect";
+import CustomMenu from "../../components/Menu";
+import { BottomNav } from "../../components/BottomNav";
 
 const { Title } = Typography;
 
@@ -39,6 +43,7 @@ function App() {
   const [autofillProgress, setAutofillProgress] = useState<number>(0);
   const [isFilling, setIsFilling] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const [isError, setIsError] = useState<boolean>(false);
   const [status, setStatus] = useState<string>("");
   const [action, setAction] = useState<string>("");
   const [reason, setReason] = useState<string>("");
@@ -169,8 +174,12 @@ function App() {
                 setIsSuccess(false);
               }, 3000);
             } else {
+              setIsError(true);
+              setTimeout(() => {
+                setIsFilling(false);
+                setIsError(false);
+              }, 5000);
               message.error("Failed to autofill fields.");
-              setIsFilling(false);
             }
           }
         );
@@ -178,209 +187,266 @@ function App() {
     });
   };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      style={{
-        height: "100vh",
-        width: "100vw",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <Card
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          padding: 20,
-          textAlign: "center",
-          background: darkMode ? "#1e1e1e" : "#fff",
-          color: darkMode ? "#fff" : "#000",
-          border: "none",
-          boxShadow: darkMode
-            ? "0 8px 24px rgba(0, 0, 0, 0.4)"
-            : "0 8px 24px rgba(0, 0, 0, 0.1)",
-        }}
-      >
-        {/* Header */}
-        <Space
-          direction="vertical"
-          size={16}
-          style={{ flex: 1, width: "100%" }}
+  const [currentPath, setCurrentPath] = useState("/");
+
+  const handleNavigation = (path: string) => {
+    setCurrentPath(path);
+  };
+
+  const renderContent = () => {
+    if (currentPath === "/") {
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0, x: 0 }}
+          transition={{ duration: 0.5 }}
+          style={{
+            height: "100vh",
+            width: "100vw",
+            display: "flex",
+            flexDirection: "column",
+          }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <img
-                src="https://cdn-icons-png.flaticon.com/512/2921/2921156.png"
-                alt="Workday Copilot"
-                style={{ width: 30, height: 30, marginRight: 8 }}
-              />
-              <Title
-                level={4}
-                style={{
-                  margin: 0,
-                  color: darkMode ? "#fff" : "#000",
-                  fontWeight: "bold",
-                }}
-              >
-                Workday Copilot
-              </Title>
-            </div>
-            <Switch
-              checkedChildren="🌙"
-              unCheckedChildren="☀️"
-              checked={darkMode}
-              onChange={() => setDarkMode(!darkMode)}
-            />
-          </div>
-          {/* Site Compatibility */}
-          {isCompatibleSite ? (
-            <Alert
-              message="This site is supported!"
-              type="success"
-              showIcon
-              icon={<CheckCircleTwoTone twoToneColor="#52c41a" />}
-            />
-          ) : (
-            <Alert
-              message="This site is not supported."
-              type="error"
-              showIcon
-              icon={<CloseCircleTwoTone twoToneColor="#ff4d4f" />}
-            />
-          )}
-          {/* File Upload */}
-          {!isFilling && (
-            <motion.div
-              initial={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-              style={{ flex: 1 }}
-            >
-              <Upload.Dragger
-                accept=".docx,.txt"
-                beforeUpload={(file) => {
-                  handleFileUpload(file);
-                  return false;
-                }}
-                showUploadList={false}
-                style={{
-                  marginTop: 16,
-                  background: darkMode ? "#333" : "#fafafa",
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <p className="ant-upload-drag-icon">
-                  <FileTextOutlined style={{ fontSize: 24 }} />
-                </p>
-                <p className="ant-upload-hint">Drop your resume .docx, .txt</p>
-              </Upload.Dragger>
-            </motion.div>
-          )}
-
-          {/* Additional Context */}
-          {!isFilling && (
-            <div style={{ position: "relative", flex: 1, marginTop: 16 }}>
-              <Input.TextArea
-                value={userData}
-                onChange={(e) => setUserData(e.target.value)}
-                placeholder="Add data here..."
-                autoSize={{ minRows: 3, maxRows: 6 }}
-                style={{
-                  background: darkMode ? "#333" : "#fff",
-                  color: darkMode ? "#fff" : "#000",
-                  height: "100%",
-                }}
-              />
-              <Tooltip title="Full Screen">
-                <Button
-                  icon={<ExpandAltOutlined />}
-                  style={{
-                    position: "absolute",
-                    top: 8,
-                    right: 12,
-                    padding: 4,
-                    background: "transparent",
-                    border: "none",
-                  }}
-                  onClick={() => {
-                    chrome.tabs.create({
-                      url: chrome.runtime.getURL("editor.html"),
-                    });
-                  }}
-                />
-              </Tooltip>
-            </div>
-          )}
-          {/* Start Autofill Button */}
-          <motion.div
-            layout
-            initial={{ opacity: 1, y: 0 }}
-            animate={isFilling ? { y: -20 } : { y: 0 }}
-            transition={{ duration: 0.5 }}
-            style={{ marginTop: 16 }}
+          <Card
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              padding: 20,
+              textAlign: "center",
+              background: darkMode ? "#1e1e1e" : "#fff",
+              color: darkMode ? "#fff" : "#000",
+              border: "none",
+              boxShadow: darkMode
+                ? "0 8px 24px rgba(0, 0, 0, 0.4)"
+                : "0 8px 24px rgba(0, 0, 0, 0.1)",
+            }}
           >
-            <Button
-              type="primary"
-              danger
-              icon={<PlayCircleOutlined />}
-              onClick={handleStartAutofill}
-              block
-              disabled={isFilling}
+            {/* Header */}
+            <Space
+              direction="vertical"
+              size={16}
+              style={{ flex: 1, width: "100%" }}
             >
-              Start Autofill
-            </Button>
-          </motion.div>
-          {/* Autofill Progress */}
-          {isFilling && !isSuccess && (
-            <>
-              <Lottie
-                animationData={scanningAnimation}
-                style={{ height: 80, margin: "10px auto" }}
-              />
-              <Progress
-                percent={autofillProgress}
-                strokeColor={{
-                  from: "#108ee9",
-                  to: "#87d068",
-                }}
-              />
-            </>
-          )}
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <img
+                    src="https://img.icons8.com/?size=100&id=eoxMN35Z6JKg&format=png&color=000000"
+                    alt="Workday Copilot"
+                    style={{ width: 30, height: 30, marginRight: 8 }}
+                  />
+                  <Title
+                    level={4}
+                    style={{
+                      margin: 0,
+                      color: darkMode ? "#fff" : "#000",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Workday Copilot
+                  </Title>
+                </div>
+                <Switch
+                  checkedChildren="🌙"
+                  unCheckedChildren="☀️"
+                  checked={darkMode}
+                  onChange={() => setDarkMode(!darkMode)}
+                />
+              </div>
+              {/* Site Compatibility */}
+              {isCompatibleSite ? (
+                <Alert
+                  message="This site is supported!"
+                  type="success"
+                  showIcon
+                  icon={<CheckCircleTwoTone twoToneColor="#52c41a" />}
+                />
+              ) : (
+                <Alert
+                  message="This site is not supported."
+                  type="error"
+                  showIcon
+                  icon={<CloseCircleTwoTone twoToneColor="#ff4d4f" />}
+                />
+              )}
+              {/* File Upload */}
+              {!isFilling && (
+                <motion.div
+                  initial={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5 }}
+                  style={{ flex: 1 }}
+                >
+                  <Upload.Dragger
+                    accept=".docx,.txt"
+                    beforeUpload={(file) => {
+                      handleFileUpload(file);
+                      return false;
+                    }}
+                    showUploadList={false}
+                    style={{
+                      marginTop: 16,
+                      background: darkMode ? "#333" : "#fafafa",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <p className="ant-upload-drag-icon">
+                      <FileTextOutlined style={{ fontSize: 24 }} />
+                    </p>
+                    <p className="ant-upload-hint">
+                      Drop your resume .docx, .txt
+                    </p>
+                  </Upload.Dragger>
+                </motion.div>
+              )}
 
-          {isFilling && (
-            <>
-              <Typewriter
-                key={action}
-                options={{
-                  autoStart: true,
-                  loop: false, // Set to true if you want it to loop
-                  delay: 10,
-                }}
-                onInit={(typewriter) => {
-                  // Start typing the current state value
-                  typewriter.typeString(action + "\n" + reason).start();
-                }}
-              />
-            </>
-          )}
-          {/* Success Animation */}
-          {isSuccess && (
-            <Lottie
-              animationData={successAnimation}
-              style={{ height: 120, margin: "20px auto" }}
-            />
-          )}
-        </Space>
-      </Card>
-    </motion.div>
+              {/* Additional Context */}
+              {!isFilling && (
+                <div style={{ position: "relative", flex: 1, marginTop: 16 }}>
+                  <Input.TextArea
+                    value={userData}
+                    onChange={(e) => setUserData(e.target.value)}
+                    placeholder="Add data here..."
+                    autoSize={{ minRows: 3, maxRows: 6 }}
+                    style={{
+                      background: darkMode ? "#333" : "#fff",
+                      color: darkMode ? "#fff" : "#000",
+                      height: "100%",
+                    }}
+                  />
+                  <Tooltip title="Full Screen">
+                    <Button
+                      icon={<ExpandAltOutlined />}
+                      style={{
+                        position: "absolute",
+                        top: 8,
+                        right: 12,
+                        padding: 4,
+                        background: "transparent",
+                        border: "none",
+                      }}
+                      onClick={() => {
+                        chrome.tabs.create({
+                          url: chrome.runtime.getURL("editor.html"),
+                        });
+                      }}
+                    />
+                  </Tooltip>
+                </div>
+              )}
+              {/* Start Autofill Button */}
+              <motion.div
+                layout
+                initial={{ opacity: 1, y: 0 }}
+                animate={isFilling ? { y: -20 } : { y: 0 }}
+                transition={{ duration: 0.5 }}
+                style={{ marginTop: 16 }}
+              >
+                <Button
+                  type="primary"
+                  danger
+                  icon={<PlayCircleOutlined />}
+                  onClick={handleStartAutofill}
+                  block
+                  disabled={isFilling}
+                >
+                  Start Autofill
+                </Button>
+              </motion.div>
+              {/* Autofill Progress */}
+              {isFilling && !isSuccess && !isError && (
+                <>
+                  <Lottie
+                    animationData={scanningAnimation}
+                    style={{ height: 80, margin: "10px auto" }}
+                  />
+                  <Progress
+                    percent={autofillProgress}
+                    strokeColor={{
+                      from: "#108ee9",
+                      to: "#87d068",
+                    }}
+                  />
+                </>
+              )}
+
+              {isFilling && !isSuccess && !isError && (
+                <>
+                  <Typewriter
+                    key={action}
+                    options={{
+                      autoStart: true,
+                      loop: false, // Set to true if you want it to loop
+                      delay: 10,
+                    }}
+                    onInit={(typewriter) => {
+                      // Start typing the current state value
+                      typewriter.typeString(action + "\n" + reason).start();
+                    }}
+                  />
+                </>
+              )}
+              {/* Success Animation */}
+              {isSuccess && (
+                <Lottie
+                  animationData={successAnimation}
+                  style={{ height: 120, margin: "20px auto" }}
+                />
+              )}
+
+              {/* Error Animation */}
+              {isError && (
+                <>
+                  <Lottie
+                    animationData={failureAnimation}
+                    style={{ height: 120, margin: "20px auto" }}
+                  />
+                  <Typewriter
+                    options={{
+                      autoStart: true,
+                      loop: false, // Set to true if you want it to loop
+                      delay: 10,
+                    }}
+                    onInit={(typewriter) => {
+                      // Start typing the current state value
+                      typewriter
+                        .typeString(
+                          "There was an unexpected error, Please try again"
+                        )
+                        .start();
+                    }}
+                  />
+                </>
+              )}
+            </Space>
+          </Card>
+        </motion.div>
+      );
+    }
+
+    if (currentPath === "/menu") {
+      return (
+        <>
+          <CustomMenu darkMode={false} />
+        </>
+      );
+    }
+  };
+
+  return (
+    <>
+      <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
+
+      <BottomNav
+        activePath={currentPath}
+        onNavigate={handleNavigation}
+        darkMode={darkMode}
+      />
+    </>
   );
 }
 

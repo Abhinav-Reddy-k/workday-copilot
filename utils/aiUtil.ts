@@ -1,9 +1,5 @@
 import OpenAI from "openai";
-const openai = new OpenAI({
-  baseURL: "http://127.0.0.1:1234/v1",
-  apiKey: "lm-studio",
-  dangerouslyAllowBrowser: true,
-});
+import { getData } from "./storageUtil";
 
 export enum LLM {
   Granite = "granite-3.1-8b-instruct",
@@ -14,68 +10,70 @@ export enum LLM {
   Deepseek = "deepseek-r1-distill-llama-8b",
 }
 
-export const model = LLM.HermesLlama;
+class AIConfig {
+  private static instance: AIConfig;
+  private openai: OpenAI;
+  private currentModel: LLM = LLM.HermesLlama;
+
+  private constructor() {
+    this.openai = new OpenAI({
+      baseURL: "http://127.0.0.1:1234/v1",
+      apiKey: "lm-studio",
+      dangerouslyAllowBrowser: true,
+    });
+  }
+
+  static getInstance(): AIConfig {
+    if (!AIConfig.instance) {
+      AIConfig.instance = new AIConfig();
+    }
+    return AIConfig.instance;
+  }
+
+  async init() {
+    const baseURL = (await getData("baseUrl")) || "http://127.0.0.1:1234/v1";
+    const apiKey = (await getData("apiKey")) || "lm-studio";
+    const model = await getData("llmModel");
+
+    this.openai = new OpenAI({
+      baseURL,
+      apiKey,
+      dangerouslyAllowBrowser: true,
+    });
+
+    if (model) {
+      this.currentModel = model as LLM;
+    }
+  }
+
+  getOpenAI(): OpenAI {
+    return this.openai;
+  }
+
+  getModel(): LLM {
+    return this.currentModel;
+  }
+}
+
+const aiConfig = AIConfig.getInstance();
 
 export async function generateTextBasedOnResume(prompt: string) {
   const savedData = await getData("userData");
+  const temperature = (await getData("temperature")) || "0.7";
   const resumeData = `User's resume data: ${JSON.stringify(savedData)}`;
-  const response = await openai.completions.create({
-    model,
+  const response = await aiConfig.getOpenAI().completions.create({
+    model: aiConfig.getModel(),
     prompt: `${resumeData}\n${prompt}`,
+    temperature: parseFloat(temperature),
   });
-  return response.choices[0].text; // Output the generated text
+  return response.choices[0].text;
 }
 
 export async function generateText(prompt: string) {
-  const response = await openai.completions.create({
-    model,
+  const response = await aiConfig.getOpenAI().completions.create({
+    model: aiConfig.getModel(),
     prompt,
     max_tokens: 1000,
   });
-  return response.choices[0].text; // Output the generated text
-}
-
-type ChatMessage = {
-  role: "system" | "user" | "assistant";
-  content: string;
-};
-
-let chatHistory: ChatMessage[] = []; // This will hold the context for the chat
-
-// Function to generate a text response based on the provided prompt and chat history
-export async function generateTextV2(prompt: string) {
-  const savedData = await getData("userData");
-  const resumeData = `User's resume data: ${JSON.stringify(savedData)}`;
-  // Add the initial message (user's resume data or context) as the first entry in the chat history
-  if (chatHistory.length === 0) {
-    chatHistory.push({ role: "system", content: resumeData }); // System message to set context
-  }
-
-  // Add the new user prompt to the chat history
-  chatHistory.push({ role: "user", content: prompt });
-
-  // Make the API call to OpenAI with the chat history
-  const response = await openai.chat.completions.create({
-    model, // Or another chat model
-    messages: chatHistory,
-  });
-
-  // Get the assistant's response from the API
-  const assistantResponse = response.choices[0].message.content as string;
-
-  // Add the assistant's response to the chat history for future context
-  chatHistory.push({ role: "assistant", content: assistantResponse! });
-
-  return assistantResponse;
-}
-
-// Function to continue the conversation with a new message
-export async function continueChat(newPrompt: string) {
-  // Add the new user message to the chat history
-  chatHistory.push({ role: "user", content: newPrompt });
-
-  // Get the assistant's response to continue the conversation
-  const assistantResponse = await generateTextBasedOnResume(newPrompt);
-
-  return assistantResponse;
+  return response.choices[0].text;
 }

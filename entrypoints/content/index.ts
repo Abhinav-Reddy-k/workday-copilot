@@ -15,44 +15,39 @@ let progressOnCurrentPage = 0;
  * @param hasError - Indicates whether the function is analyzing the page due to errors.
  */
 async function analyzePageFields(hasError: boolean = false): Promise<void> {
-  try {
-    const labels = Array.from(
-      document.querySelectorAll<HTMLLabelElement>("label")
-    );
+  const labels = Array.from(
+    document.querySelectorAll<HTMLLabelElement>("label")
+  );
 
-    let currentLabel = 0;
+  let currentLabel = 0;
 
-    const isDateInput = document.querySelector<HTMLElement>(
-      '[data-automation-id="dateIcon"]'
-    );
+  const isDateInput = document.querySelector<HTMLElement>(
+    '[data-automation-id="dateIcon"]'
+  );
 
-    console.log("Date Input", isDateInput);
+  console.log("Date Input", isDateInput);
 
-    if (isDateInput) {
-      await handleDateInput(isDateInput, "Date Input");
-    }
-
-    await processFieldsets(hasError);
-
-    for (const label of labels) {
-      const labelText = label.textContent?.trim() || "";
-      const inputId = label.getAttribute("for");
-      const inputElement = inputId ? document.getElementById(inputId) : null;
-
-      if (!inputElement || !shouldProcessInput(inputElement, hasError))
-        continue;
-
-      await processInputElement(inputElement, labelText, hasError);
-      delay(1000);
-      // update current page progress after processing each input based on number of labels processed
-      currentLabel++;
-      progressOnCurrentPage = (currentLabel / labels.length) * 100;
-    }
-    progressOnCurrentPage = 100;
-    await handleNavigation();
-  } catch (error) {
-    console.error("Error analyzing page fields:", error);
+  if (isDateInput) {
+    await handleDateInput(isDateInput, "Date Input");
   }
+
+  await processFieldsets(hasError);
+
+  for (const label of labels) {
+    const labelText = label.textContent?.trim() || "";
+    const inputId = label.getAttribute("for");
+    const inputElement = inputId ? document.getElementById(inputId) : null;
+
+    if (!inputElement || !shouldProcessInput(inputElement, hasError)) continue;
+
+    await processInputElement(inputElement, labelText, hasError);
+    delay(1000);
+    // update current page progress after processing each input based on number of labels processed
+    currentLabel++;
+    progressOnCurrentPage = (currentLabel / labels.length) * 100;
+  }
+  progressOnCurrentPage = 100;
+  await handleNavigation();
 }
 
 /**
@@ -85,6 +80,11 @@ async function processInputElement(
   const widgetType = inputElement.getAttribute("data-uxi-widget-type");
   const inputType = inputElement.getAttribute("type");
   const isListbox = inputElement.getAttribute("aria-haspopup") === "listbox";
+  console.log("Value of input element:", inputElement.getAttribute("value"));
+  // check if input elment has already a value
+  if (inputElement.getAttribute("value")) {
+    return;
+  }
 
   if (isListbox) {
     await handleSelectInput(inputElement, labelText);
@@ -104,8 +104,8 @@ async function processInputElement(
  */
 async function handleNavigation(): Promise<void> {
   if (maxRetryCountForCurrentPage <= 0) {
-    console.warn("Max retry count reached for the current page.");
-    return;
+    maxRetryCountForCurrentPage = 3;
+    throw new Error("Max retry count reached for the current page.");
   }
 
   const dataAutomationId = saveButtonDataAutomationId

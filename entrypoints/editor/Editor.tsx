@@ -285,12 +285,23 @@ const WorkdayCopilot = () => {
               }}
             >
               <div>
-                <Title
-                  level={2}
-                  style={{ margin: 0, color: darkMode ? "#fff" : undefined }}
-                >
-                  Workday Copilot
-                </Title>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <img
+                    src="https://img.icons8.com/?size=100&id=eoxMN35Z6JKg&format=png&color=000000"
+                    alt="Workday Copilot"
+                    style={{ width: 30, height: 30, marginRight: 8 }}
+                  />
+                  <Title
+                    level={4}
+                    style={{
+                      margin: 0,
+                      color: darkMode ? "#fff" : "#000",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Workday Copilot
+                  </Title>
+                </div>
                 <Text
                   type="secondary"
                   style={{ color: darkMode ? "#999" : undefined }}
@@ -312,10 +323,10 @@ const WorkdayCopilot = () => {
                   />
                 </Tooltip>
                 <Switch
+                  checkedChildren="🌙"
+                  unCheckedChildren="☀️"
                   checked={darkMode}
                   onChange={toggleTheme}
-                  checkedChildren={<MoonOutlined />}
-                  unCheckedChildren={<SunOutlined />}
                 />
               </Space>
             </div>
