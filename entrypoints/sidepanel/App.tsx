@@ -1,10 +1,9 @@
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import {
   Button,
   Card,
   Typography,
   Alert,
-  Divider,
   Switch,
   Progress,
   Tooltip,
@@ -12,14 +11,12 @@ import {
   Upload,
   message,
   Input,
-  Layout,
 } from "antd";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   CheckCircleTwoTone,
   CloseCircleTwoTone,
   PlayCircleOutlined,
-  InfoCircleOutlined,
   FileTextOutlined,
   ExpandAltOutlined,
 } from "@ant-design/icons";
@@ -44,7 +41,9 @@ function App() {
   const [isFilling, setIsFilling] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [isError, setIsError] = useState<boolean>(false);
-  const [status, setStatus] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>(
+    "There was an unexpected error, Please try again"
+  );
   const [action, setAction] = useState<string>("");
   const [reason, setReason] = useState<string>("");
 
@@ -53,6 +52,8 @@ function App() {
     const loadData = async () => {
       const savedUserData = await getData("userData");
       if (savedUserData) setUserData(savedUserData);
+      const savedTheme = await getData("globalTheme");
+      if (savedTheme === "dark") setDarkMode(true);
     };
     loadData();
   }, []);
@@ -76,9 +77,7 @@ function App() {
         action: string;
         payload: { action: string; reason: string; value: string };
       }) => {
-        console.log("received", message);
         if (message.action === "updateStatus") {
-          console.log(message);
           setReason(message.payload.reason);
           setAction(message.payload.action);
         }
@@ -120,6 +119,22 @@ function App() {
     saveData("userData", userData);
   }, [userData]);
 
+  // Dynamically inject placeholder styles
+  useEffect(() => {
+    const styleTag = document.createElement("style");
+    styleTag.innerHTML = `
+      /* Light mode placeholder */
+      .ant-input.textarea-placeholder::placeholder {
+        color: ${darkMode ? "#ccc" : "#aaa"} !important;
+      }
+    `;
+    document.head.appendChild(styleTag);
+
+    return () => {
+      document.head.removeChild(styleTag);
+    };
+  }, [darkMode]);
+
   // Handle file upload and extract text
   const handleFileUpload = async (file: File) => {
     try {
@@ -160,12 +175,11 @@ function App() {
 
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tabId = tabs[0]?.id;
-      console.log("Starting autofill process...");
 
       if (tabId) {
         chrome.tabs.sendMessage(
           tabId,
-          { action: "analyzeFields" },
+          { action: "fillThePage" },
           (response) => {
             if (response?.status === "done") {
               setIsSuccess(true);
@@ -174,6 +188,13 @@ function App() {
                 setIsSuccess(false);
               }, 3000);
             } else {
+              if (response?.error) {
+                setErrorMessage(
+                  "There was an unexpected error, Please try again" +
+                    "\n" +
+                    response?.error
+                );
+              }
               setIsError(true);
               setTimeout(() => {
                 setIsFilling(false);
@@ -250,7 +271,10 @@ function App() {
                   checkedChildren="🌙"
                   unCheckedChildren="☀️"
                   checked={darkMode}
-                  onChange={() => setDarkMode(!darkMode)}
+                  onChange={() => {
+                    setDarkMode(!darkMode);
+                    saveData("globalTheme", darkMode ? "light" : "dark");
+                  }}
                 />
               </div>
               {/* Site Compatibility */}
@@ -297,7 +321,12 @@ function App() {
                     <p className="ant-upload-drag-icon">
                       <FileTextOutlined style={{ fontSize: 24 }} />
                     </p>
-                    <p className="ant-upload-hint">
+                    <p
+                      style={{
+                        color: darkMode ? "#fff" : "#000",
+                      }}
+                      className="ant-upload-hint"
+                    >
                       Drop your resume .docx, .txt
                     </p>
                   </Upload.Dragger>
@@ -308,19 +337,28 @@ function App() {
               {!isFilling && (
                 <div style={{ position: "relative", flex: 1, marginTop: 16 }}>
                   <Input.TextArea
+                    className={`textarea-placeholder ${
+                      darkMode ? "dark-mode" : ""
+                    }`}
                     value={userData}
                     onChange={(e) => setUserData(e.target.value)}
-                    placeholder="Add data here..."
+                    placeholder="Add your details here..."
                     autoSize={{ minRows: 3, maxRows: 6 }}
                     style={{
-                      background: darkMode ? "#333" : "#fff",
+                      background: darkMode ? "#1f1f1f" : "#fff",
                       color: darkMode ? "#fff" : "#000",
                       height: "100%",
                     }}
                   />
                   <Tooltip title="Full Screen">
                     <Button
-                      icon={<ExpandAltOutlined />}
+                      icon={
+                        <ExpandAltOutlined
+                          style={{
+                            color: darkMode ? "#fff" : "#000",
+                          }}
+                        />
+                      }
                       style={{
                         position: "absolute",
                         top: 8,
@@ -413,11 +451,7 @@ function App() {
                     }}
                     onInit={(typewriter) => {
                       // Start typing the current state value
-                      typewriter
-                        .typeString(
-                          "There was an unexpected error, Please try again"
-                        )
-                        .start();
+                      typewriter.typeString(errorMessage).start();
                     }}
                   />
                 </>
@@ -431,7 +465,7 @@ function App() {
     if (currentPath === "/menu") {
       return (
         <>
-          <CustomMenu darkMode={false} />
+          <CustomMenu darkMode={darkMode} />
         </>
       );
     }

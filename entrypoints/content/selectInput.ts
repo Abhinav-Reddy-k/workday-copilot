@@ -1,4 +1,4 @@
-import { generateTextBasedOnResume } from "@/utils/aiUtil";
+import { generateText } from "@/utils/aiUtil";
 import { delay, updateStatus } from "@/utils/commonUtils";
 
 /**
@@ -132,7 +132,7 @@ async function selectOptionWithAI(
 
   try {
     const prompt = generatePrompt(labelText, optionsData);
-    const aiResponse = await generateTextBasedOnResume(prompt);
+    const aiResponse = await generateText(prompt, true);
     const completion = parseAIResponse(aiResponse);
 
     updateStatus(

@@ -1,5 +1,6 @@
-import { generateTextBasedOnResume } from "@/utils/aiUtil";
+import { generateText } from "@/utils/aiUtil";
 import { updateStatus } from "@/utils/commonUtils";
+import { getProgressBarStep } from "@/utils/progressUtils";
 
 /**
  * Represents a pair of label and its associated input element
@@ -127,7 +128,7 @@ async function selectOptionWithAI(
 
   try {
     const prompt = generatePrompt(labelText, options);
-    const aiResponse = await generateTextBasedOnResume(prompt);
+    const aiResponse = await generateText(prompt, true);
     const completion = parseAIResponse(aiResponse);
 
     updateStatus(

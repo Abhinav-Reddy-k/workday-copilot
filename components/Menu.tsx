@@ -8,7 +8,6 @@ import {
   ConfigProvider,
   theme,
   Space,
-  Button,
   Row,
   Col,
 } from "antd";
@@ -20,19 +19,12 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 import { saveData, getData } from "@/utils/storageUtil";
+import { LLM } from "@/utils/aiUtil";
+
 import { motion } from "framer-motion";
 
 const { Title, Paragraph } = Typography;
 const { Option } = Select;
-
-enum LLM {
-  Granite = "granite-3.1-8b-instruct",
-  Gemma = "gemma-2-2b-it",
-  Mistral = "mistral-7b-instruct-v0.3",
-  HermesLlama = "hermes-3-llama-3.2-3b",
-  Qwen7b = "qwen2.5-7b-instruct",
-  Deepseek = "deepseek-r1-distill-llama-8b",
-}
 
 interface MenuSettings {
   llmModel: string;

@@ -1,9 +1,6 @@
-import { generateTextBasedOnResume } from "@/utils/aiUtil";
-import {
-  getProgressBarStep,
-  getTextContentAbove,
-  updateStatus,
-} from "@/utils/commonUtils";
+import { generateText } from "@/utils/aiUtil";
+import { getTextContentAbove, updateStatus } from "@/utils/commonUtils";
+import { getProgressBarStep } from "@/utils/progressUtils";
 
 /**
  * Represents the possible states of a checkbox
@@ -107,7 +104,7 @@ async function determineDesiredState(
 ): Promise<CheckboxState> {
   try {
     const prompt = generatePrompt(labelText, currentState, contextSoFar);
-    const aiResponse = await generateTextBasedOnResume(prompt);
+    const aiResponse = await generateText(prompt, true);
     const completion = parseAIResponse(aiResponse);
 
     updateStatus(

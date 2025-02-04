@@ -6,7 +6,7 @@ export default defineConfig({
   modules: ["@wxt-dev/module-react"],
   manifest: {
     name: "Workday Co-pilot",
-    permissions: ["storage", "activeTab"],
+    permissions: ["storage", "activeTab", "downloads"],
     action: {
       default_title: "WXT",
     },

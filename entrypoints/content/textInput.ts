@@ -1,4 +1,4 @@
-import { generateTextBasedOnResume } from "@/utils/aiUtil";
+import { generateText } from "@/utils/aiUtil";
 import { updateStatus } from "@/utils/commonUtils";
 
 type AIResponse = {
@@ -25,7 +25,8 @@ export const handleTextInput = async (
   // Generate AI response
   let aiResponse: string;
   try {
-    aiResponse = await generateTextBasedOnResume(`
+    aiResponse = await generateText(
+      `
       You are an intelligent assistant helping a user complete a job application form on Workday. Your task is to provide the most appropriate value for a text input field based on the given label and the user's saved data.  
 
       ### Instructions:
@@ -42,7 +43,9 @@ export const handleTextInput = async (
         getTextContentAbove(inputElement)
       )}
     )}
-    `);
+    `,
+      true
+    );
   } catch (error) {
     console.error("Error generating AI response:", error);
     return;

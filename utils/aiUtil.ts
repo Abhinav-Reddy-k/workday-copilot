@@ -10,70 +10,102 @@ export enum LLM {
   Deepseek = "deepseek-r1-distill-llama-8b",
 }
 
-class AIConfig {
-  private static instance: AIConfig;
-  private openai: OpenAI;
-  private currentModel: LLM = LLM.HermesLlama;
-
-  private constructor() {
-    this.openai = new OpenAI({
-      baseURL: "http://127.0.0.1:1234/v1",
-      apiKey: "lm-studio",
-      dangerouslyAllowBrowser: true,
-    });
-  }
-
-  static getInstance(): AIConfig {
-    if (!AIConfig.instance) {
-      AIConfig.instance = new AIConfig();
-    }
-    return AIConfig.instance;
-  }
-
-  async init() {
-    const baseURL = (await getData("baseUrl")) || "http://127.0.0.1:1234/v1";
-    const apiKey = (await getData("apiKey")) || "lm-studio";
-    const model = await getData("llmModel");
-
-    this.openai = new OpenAI({
-      baseURL,
-      apiKey,
-      dangerouslyAllowBrowser: true,
-    });
-
-    if (model) {
-      this.currentModel = model as LLM;
-    }
-  }
-
-  getOpenAI(): OpenAI {
-    return this.openai;
-  }
-
-  getModel(): LLM {
-    return this.currentModel;
-  }
+// Utility function to create an OpenAI client with the latest config
+async function getOpenAI(): Promise<OpenAI> {
+  const baseURL = (await getData("baseUrl")) || "http://127.0.0.1:1234/v1";
+  const apiKey = (await getData("apiKey")) || "lm-studio";
+  return new OpenAI({
+    baseURL,
+    apiKey,
+    dangerouslyAllowBrowser: true,
+  });
 }
 
-const aiConfig = AIConfig.getInstance();
+// Utility function to get the latest model
+async function getModel(): Promise<LLM> {
+  const model = await getData("llmModel");
+  return model ? (model as LLM) : LLM.HermesLlama; // Default if not set
+}
 
-export async function generateTextBasedOnResume(prompt: string) {
-  const savedData = await getData("userData");
-  const temperature = (await getData("temperature")) || "0.7";
-  const resumeData = `User's resume data: ${JSON.stringify(savedData)}`;
-  const response = await aiConfig.getOpenAI().completions.create({
-    model: aiConfig.getModel(),
-    prompt: `${resumeData}\n${prompt}`,
-    temperature: parseFloat(temperature),
+// Unified text generation function
+export async function generateText(
+  prompt: string,
+  useResumeData: boolean = false
+): Promise<string> {
+  const openai = await getOpenAI(); // Fetch the latest OpenAI client
+  const model = await getModel(); // Fetch the latest model
+  const temperature = parseFloat((await getData("temperature")) || "0.7");
+
+  let fullPrompt = prompt;
+
+  if (useResumeData) {
+    const savedData = await getData("userData");
+    const resumeData = `User's resume data: ${JSON.stringify(savedData)}`;
+    fullPrompt = `${resumeData}\n${prompt}`;
+  }
+
+  const response = await openai.completions.create({
+    model,
+    prompt: fullPrompt,
+    temperature,
   });
+
   return response.choices[0].text;
 }
 
-export async function generateText(prompt: string) {
-  const response = await aiConfig.getOpenAI().completions.create({
-    model: aiConfig.getModel(),
-    prompt,
-    max_tokens: 1000,
-  });
-  return response.choices[0].text;
+function getAllButtonsData(): {
+  dataAutomationId: string;
+  textContent: string;
+}[] {
+  const buttons = document.querySelectorAll<HTMLButtonElement>(
+    "button[data-automation-id]"
+  );
+  return Array.from(buttons).map((button) => ({
+    dataAutomationId: button.getAttribute("data-automation-id") || "",
+    textContent: button.textContent?.trim() || "",
+  }));
+}
+
+export async function getSaveButtonId(): Promise<string> {
+  const buttonData = getAllButtonsData();
+
+  const buttonListString = buttonData
+    .map(
+      (button, index) =>
+        `${index + 1}. Text: "${button.textContent}" | Data-Automation-ID: "${
+          button.dataAutomationId
+        }"`
+    )
+    .join("\n");
+
+  const prompt = `You are an intelligent assistant helping a user complete a job ap
+    plication form on Workday. 
+    Your task is to identify the most appropriate button to proceed to the next step of the form. \n\n
+    ### Instructions:\n
+    1. Analyze the **button text** and **Data-Automation-ID**.\n2. 
+    Use the context provided by the button text to determine the best possible button for the action.\n
+    3. Return a **JSON object** in the below structure:\n  
+    { "reason": "reason for selecting the button", "dataAutomationId": "the data-automation-id of the selected button" }  \n
+    4. If no button matches, provide a reason and return null.\n\n
+    ### Inputs:\n
+    - **Context**: The user is navigating a Workday form and looking for the 'Next' button to proceed to the next step.\n
+    - **Buttons**:\n${buttonListString}\n\n
+    Which button corresponds to the action to proceed? Respond only with a JSON object.`;
+
+  // Step 3: Use the helper function to query OpenAI
+  const result: {
+    reason: string;
+    dataAutomationId: string;
+  } = JSON.parse(await generateText(prompt));
+
+  // check if the dataAutomationId is valid
+  const selectedButton = buttonData.find(
+    (button) => button.dataAutomationId === result.dataAutomationId
+  );
+
+  if (selectedButton) {
+    return result.dataAutomationId;
+  } else {
+    return await getSaveButtonId();
+  }
 }

@@ -1,5 +1,6 @@
-import { generateTextBasedOnResume } from "@/utils/aiUtil";
+import { generateText } from "@/utils/aiUtil";
 import { delay, updateStatus } from "@/utils/commonUtils";
+import { getProgressBarStep } from "@/utils/progressUtils";
 
 /**
  * Represents an option in a multi-select dropdown
@@ -204,7 +205,7 @@ async function selectOption(
 
   try {
     const prompt = generatePrompt(labelText, optionsData);
-    const aiResponse = await generateTextBasedOnResume(prompt);
+    const aiResponse = await generateText(prompt, true);
     const completion = parseAIResponse(aiResponse);
 
     updateStatus(

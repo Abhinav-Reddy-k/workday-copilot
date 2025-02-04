@@ -4,18 +4,6 @@ export function delay(ms: number) {
 }
 
 /**
- * Retrieves the current progress bar step.
- * @returns The current step as a string.
- */
-export function getProgressBarStep(): string {
-  return (
-    document
-      .querySelector('[data-automation-id="progressBarActiveStep"]')
-      ?.textContent?.trim() || ""
-  );
-}
-
-/**
  * Simulates typing into an input element letter by letter.
  *
  * @param {HTMLElement} inputElement - The input element to type into.
@@ -121,7 +109,6 @@ export function getTextContentAbove(inputElement: HTMLInputElement): string {
 }
 
 export function updateStatus(action: string, reason: string, value: string) {
-  console.log(`Updating status: ${action} - ${reason} - ${value}`);
   chrome.runtime.sendMessage({
     action: "updateStatus",
     payload: { action, reason, value },
@@ -229,7 +216,7 @@ export function formatResume(resumeText: string): string {
       if (
         variations.some((heading) => line.toUpperCase().startsWith(heading)) &&
         !completedSections.includes(formattedHeading) &&
-        line.split(" ").length < 3
+        line.split(" ").length < 5
       ) {
         currentSection = formattedHeading;
         formattedText += `\n${formattedHeading}\n`;

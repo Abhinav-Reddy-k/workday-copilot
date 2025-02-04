@@ -6,9 +6,9 @@
 
 A Chrome extension built with WXT that automates Workday job application forms using local LLM integration. Save time by automatically filling out job applications with your saved resume data.
 
-## 🎥 Demo
+<!-- ## 🎥 Demo
 
-[![Watch Demo Video](https://i.ytimg.com/vi/1Nw_XkKJPCw/hqdefault.jpg?sqp=-oaymwFBCNACELwBSFryq4qpAzMIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB8AEB-AHSBoAC4AOKAgwIABABGBMgUSh_MA8=&rs=AOn4CLA0E_0Jlp15k3rFM7sUty6u0ZaUng)](https://www.youtube.com/watch?v=1Nw_XkKJPCw)
+[![Watch Demo Video](https://i.ytimg.com/vi/1Nw_XkKJPCw/hqdefault.jpg?sqp=-oaymwFBCNACELwBSFryq4qpAzMIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB8AEB-AHSBoAC4AOKAgwIABABGBMgUSh_MA8=&rs=AOn4CLA0E_0Jlp15k3rFM7sUty6u0ZaUng)](https://www.youtube.com/watch?v=1Nw_XkKJPCw) -->
 
 ## 🌟 Features
 

@@ -14,13 +14,11 @@ import {
   message,
   Tooltip,
   Spin,
+  ConfigProvider,
 } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   SaveOutlined,
-  DeleteOutlined,
-  SunOutlined,
-  MoonOutlined,
   ExclamationCircleOutlined,
   InfoCircleOutlined,
   UserOutlined,
@@ -33,8 +31,10 @@ import {
   IdcardOutlined,
   EllipsisOutlined,
   LoadingOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import { saveData, getData, clearData } from "@/utils/storageUtil";
+import { downloadTextFile } from "@/utils/fileUtil";
 
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
@@ -120,7 +120,7 @@ const WorkdayCopilot = () => {
         }
 
         // Load theme preference
-        const savedTheme = await getData("editorTheme");
+        const savedTheme = await getData("globalTheme");
         if (savedTheme) {
           setDarkMode(savedTheme === "dark");
         }
@@ -201,10 +201,25 @@ const WorkdayCopilot = () => {
     }
   };
 
+  const handleDownload = () => {
+    try {
+      const combinedData = Object.entries(sections)
+        .map(
+          ([sectionName, sectionContent]) =>
+            `${sectionName}\n${sectionContent.trim()}`
+        )
+        .join("\n\n");
+      downloadTextFile(combinedData);
+      message.success("ATS friendly resume saved successfully!");
+    } catch (error: any) {
+      message.error("Failed to download resume", error.message);
+    }
+  };
+
   const toggleTheme = async () => {
     try {
       const newTheme = !darkMode ? "dark" : "light";
-      await saveData("editorTheme", newTheme);
+      await saveData("globalTheme", newTheme);
       setDarkMode(!darkMode);
     } catch (error) {
       message.error("Failed to save theme preference");
@@ -255,269 +270,305 @@ const WorkdayCopilot = () => {
   }
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        style={{ width: "100%" }}
+    <ConfigProvider
+      theme={{
+        algorithm: darkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+        token: {
+          colorPrimary: "#1890ff",
+          borderRadius: 8,
+        },
+      }}
+    >
+      <Layout
+        style={{
+          minHeight: "100vh",
+          background: darkMode ? "#141414" : "#fff",
+        }}
       >
-        <Layout
-          style={{
-            background: darkMode ? token.colorBgContainer : "#f0f2f5",
-            minHeight: "100vh",
-            padding: "0.5rem",
-          }}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          style={{ width: "100%" }}
         >
-          {/* Header Section */}
-          <Card
-            style={{
-              marginBottom: "0.5rem",
-              background: darkMode ? "#141414" : "#fff",
-              borderRadius: "8px",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div>
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <img
-                    src="https://img.icons8.com/?size=100&id=eoxMN35Z6JKg&format=png&color=000000"
-                    alt="Workday Copilot"
-                    style={{ width: 30, height: 30, marginRight: 8 }}
-                  />
-                  <Title
-                    level={4}
-                    style={{
-                      margin: 0,
-                      color: darkMode ? "#fff" : "#000",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Workday Copilot
-                  </Title>
-                </div>
-                <Text
-                  type="secondary"
-                  style={{ color: darkMode ? "#999" : undefined }}
-                >
-                  Complete your profile sections below
-                </Text>
-              </div>
-              <Space size="middle">
-                <Tooltip
-                  title={
-                    saved ? "All changes saved" : "You have unsaved changes"
-                  }
-                >
-                  <InfoCircleOutlined
-                    style={{
-                      color: saved ? "#52c41a" : "#faad14",
-                      fontSize: 16,
-                    }}
-                  />
-                </Tooltip>
-                <Switch
-                  checkedChildren="🌙"
-                  unCheckedChildren="☀️"
-                  checked={darkMode}
-                  onChange={toggleTheme}
-                />
-              </Space>
-            </div>
-
-            {/* Progress Section */}
-            <div style={{ marginTop: "1rem" }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                <Text style={{ color: darkMode ? "#999" : undefined }}>
-                  Profile Completion
-                </Text>
-                <Text strong style={{ color: darkMode ? "#fff" : undefined }}>
-                  {calculateProgress()}%
-                </Text>
-              </div>
-              <motion.div
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ duration: 0.5 }}
-              >
-                <Progress
-                  percent={calculateProgress()}
-                  strokeColor={{
-                    "0%": "#108ee9",
-                    "100%": "#87d068",
-                  }}
-                  showInfo={false}
-                />
-              </motion.div>
-            </div>
-          </Card>
-
-          {/* Main Content */}
           <Layout
             style={{
-              background: "transparent",
-              display: "flex",
-              flexDirection: "row",
-              height: "calc(100vh - 200px)",
+              background: darkMode ? "#141414" : "#fff",
+              minHeight: "100vh",
+              padding: "0.5rem",
             }}
           >
-            {/* Sidebar */}
-            <Sider
-              width={300}
+            <Content
               style={{
-                background: "transparent",
-                marginRight: "2rem",
-                height: "100%",
+                background: darkMode ? "#141414" : "#fff",
+                color: darkMode ? "#fff" : "#000",
               }}
             >
+              {/* Header Section */}
               <Card
                 style={{
-                  background: darkMode ? "#141414" : "#fff",
+                  marginBottom: "0.5rem",
+                  backgroundColor: darkMode ? "#141414" : "#fff",
                   borderRadius: "8px",
-                  height: "100%",
                 }}
               >
-                <Menu
-                  mode="inline"
-                  selectedKeys={[activeSection]}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <img
+                        src="https://img.icons8.com/?size=100&id=eoxMN35Z6JKg&format=png&color=000000"
+                        alt="Workday Copilot"
+                        style={{ width: 30, height: 30, marginRight: 8 }}
+                      />
+                      <Title
+                        level={4}
+                        style={{
+                          margin: 0,
+                          color: darkMode ? "#fff" : "#000",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Workday Copilot
+                      </Title>
+                    </div>
+                    <Text
+                      type="secondary"
+                      style={{ color: darkMode ? "#999" : undefined }}
+                    >
+                      Complete your profile sections below
+                    </Text>
+                  </div>
+                  <Space size="middle">
+                    <Tooltip
+                      title={
+                        saved ? "All changes saved" : "You have unsaved changes"
+                      }
+                    >
+                      <InfoCircleOutlined
+                        style={{
+                          color: saved ? "#52c41a" : "#faad14",
+                          fontSize: 16,
+                        }}
+                      />
+                    </Tooltip>
+                    <Switch
+                      checkedChildren="🌙"
+                      unCheckedChildren="☀️"
+                      checked={darkMode}
+                      onChange={toggleTheme}
+                    />
+                  </Space>
+                </div>
+
+                {/* Progress Section */}
+                <div style={{ marginTop: "1rem" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    <Text style={{ color: darkMode ? "#999" : undefined }}>
+                      Profile Completion
+                    </Text>
+                    <Text
+                      strong
+                      style={{ color: darkMode ? "#fff" : undefined }}
+                    >
+                      {calculateProgress()}%
+                    </Text>
+                  </div>
+                  <motion.div
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <Progress
+                      percent={calculateProgress()}
+                      strokeColor={{
+                        "0%": darkMode ? "#108ee9" : "#1890ff",
+                        "100%": darkMode ? "#87d068" : "#52c41a",
+                      }}
+                      showInfo={false}
+                    />
+                  </motion.div>
+                </div>
+              </Card>
+
+              {/* Main Content */}
+              <Layout
+                style={{
+                  background: "transparent",
+                  display: "flex",
+                  flexDirection: "row",
+                  height: "calc(100vh - 200px)",
+                }}
+              >
+                {/* Sidebar */}
+                <Sider
+                  width={300}
                   style={{
                     background: "transparent",
-                    border: "none",
+                    marginRight: "2rem",
+                    height: "100%",
                   }}
-                  onClick={({ key }) => setActiveSection(key)}
-                >
-                  {Object.keys(sections).map((section) => (
-                    <Menu.Item
-                      key={section}
-                      icon={sectionIcons[section]}
-                      style={{
-                        color: darkMode ? "#fff" : undefined,
-                      }}
-                    >
-                      {section.replace(/_/g, " ")}
-                    </Menu.Item>
-                  ))}
-                </Menu>
-              </Card>
-            </Sider>
-
-            {/* Content Area */}
-            <Content style={{ height: "100%" }}>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeSection}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.2 }}
-                  style={{ height: "90%" }}
                 >
                   <Card
-                    title={
-                      <Space>
-                        {sectionIcons[activeSection]}
-                        {activeSection.replace(/_/g, " ")}
-                      </Space>
-                    }
                     style={{
                       background: darkMode ? "#141414" : "#fff",
                       borderRadius: "8px",
                       height: "100%",
-                      display: "flex",
-                      flexDirection: "column",
                     }}
                   >
-                    <div
+                    <Menu
+                      theme={darkMode ? "dark" : "light"}
+                      mode="inline"
+                      selectedKeys={[activeSection]}
+                      onClick={({ key }) => setActiveSection(key)}
                       style={{
-                        flex: 1,
-                        display: "flex",
-                        flexDirection: "column",
+                        background: darkMode ? "#141414" : "#fff",
+                        color: darkMode ? "#fff" : "#000",
                       }}
                     >
-                      <TextArea
-                        value={sections[activeSection]}
-                        onChange={(e) => {
-                          setSaved(false);
-                          setSections((prev) => ({
-                            ...prev,
-                            [activeSection]: e.target.value,
-                          }));
-                        }}
-                        placeholder={`Enter your ${activeSection
-                          .toLowerCase()
-                          .replace(/_/g, " ")}...`}
-                        autoSize={{ minRows: 13 }}
+                      {Object.keys(sections).map((section) => (
+                        <Menu.Item
+                          key={section}
+                          icon={sectionIcons[section]}
+                          style={{
+                            color: darkMode ? "#fff" : undefined,
+                          }}
+                        >
+                          {section.replace(/_/g, " ")}
+                        </Menu.Item>
+                      ))}
+                    </Menu>
+                  </Card>
+                </Sider>
+
+                {/* Content Area */}
+                <Content style={{ height: "100%" }}>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeSection}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ height: "90%" }}
+                    >
+                      <Card
+                        title={
+                          <Space style={{ color: darkMode ? "#fff" : "#000" }}>
+                            {sectionIcons[activeSection]}
+                            {activeSection.replace(/_/g, " ")}
+                          </Space>
+                        }
                         style={{
-                          flex: 1,
-                          background: darkMode ? "#1f1f1f" : "#fff",
-                          color: darkMode ? "#fff" : undefined,
-                          border: darkMode ? "1px solid #434343" : undefined,
-                          resize: "none",
-                        }}
-                      />
-                      <div
-                        style={{
-                          marginTop: "0.5rem",
-                          fontSize: "12px",
-                          color: darkMode ? "#999" : "#666",
+                          background: darkMode ? "#141414" : "#fff",
+                          borderRadius: "8px",
+                          height: "100%",
+                          display: "flex",
+                          flexDirection: "column",
                         }}
                       >
-                        Words: {getWordCount(sections[activeSection])} |
-                        Characters: {getCharCount(sections[activeSection])}
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
+                        <div
+                          style={{
+                            flex: 1,
+                            display: "flex",
+                            flexDirection: "column",
+                          }}
+                        >
+                          <TextArea
+                            value={sections[activeSection]}
+                            onChange={(e) => {
+                              setSaved(false);
+                              setSections((prev) => ({
+                                ...prev,
+                                [activeSection]: e.target.value,
+                              }));
+                            }}
+                            placeholder={`Enter your ${activeSection
+                              .toLowerCase()
+                              .replace(/_/g, " ")}...`}
+                            autoSize={{ minRows: 13 }}
+                            style={{
+                              flex: 1,
+                              background: darkMode ? "#1f1f1f" : "#fff",
+                              color: darkMode ? "#fff" : undefined,
+                              border: darkMode
+                                ? "1px solid #434343"
+                                : undefined,
+                              resize: "none",
+                            }}
+                          />
+                          <div
+                            style={{
+                              marginTop: "0.5rem",
+                              fontSize: "12px",
+                              color: darkMode ? "#999" : "#666",
+                            }}
+                          >
+                            Words: {getWordCount(sections[activeSection])} |
+                            Characters: {getCharCount(sections[activeSection])}
+                          </div>
+                        </div>
+                      </Card>
+                    </motion.div>
 
-                {/* Action Buttons */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  style={{
-                    marginTop: "1rem",
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: "1rem",
-                  }}
-                >
-                  <Tooltip title="Clear all sections (Ctrl+Del)">
-                    <Button
-                      icon={<DeleteOutlined />}
-                      onClick={showClearConfirm}
-                      danger
+                    {/* Action Buttons */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      style={{
+                        marginTop: "1rem",
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        gap: "1rem",
+                      }}
                     >
-                      Clear All
-                    </Button>
-                  </Tooltip>
-                  <Tooltip title="Save changes (Ctrl+S)">
-                    <Button
-                      type="primary"
-                      icon={<SaveOutlined />}
-                      onClick={handleSave}
-                      disabled={saved}
-                    >
-                      Save Changes
-                    </Button>
-                  </Tooltip>
-                </motion.div>
-              </AnimatePresence>
+                      <Tooltip title="Clear all sections (Ctrl+Del)">
+                        <Button danger onClick={showClearConfirm}>
+                          Clear All
+                        </Button>
+                      </Tooltip>
+                      <Tooltip title="Download resume (Ctrl+D)">
+                        <Button
+                          type="dashed"
+                          icon={<DownloadOutlined />}
+                          onClick={handleDownload}
+                          style={{
+                            marginRight: "1rem",
+                          }}
+                        >
+                          Download Resume
+                        </Button>
+                      </Tooltip>
+                      <Tooltip title="Save changes (Ctrl+S)">
+                        <Button
+                          type="primary"
+                          icon={<SaveOutlined />}
+                          onClick={handleSave}
+                          disabled={saved}
+                        >
+                          Save Changes
+                        </Button>
+                      </Tooltip>
+                    </motion.div>
+                  </AnimatePresence>
+                </Content>
+              </Layout>
             </Content>
           </Layout>
-        </Layout>
-      </motion.div>
-    </Layout>
+        </motion.div>
+      </Layout>
+    </ConfigProvider>
   );
 };
 
