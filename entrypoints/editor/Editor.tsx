@@ -65,7 +65,10 @@ const exampleVoluntaryDisclosures = `Race/Ethnicity:
 
 Gender:
   Q1: What is your gender?
-  A1: Male`;
+  A1: Male
+  
+  *Yes, I acknowledge that I have read and understand the policy.*
+Check that box always`;
 
 const exampleSelfIdentify = `Eligibility to Work
 Are you legally authorized to work in the United States?

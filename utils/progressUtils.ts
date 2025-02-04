@@ -61,3 +61,17 @@ export function calculateOverallPercentage(
 
   return Math.floor(overallPercentage); // Return as a string with one decimal place
 }
+
+// helper function to check if its the last step
+export function isLastStep(): boolean {
+  const progressBarText = getProgressBarStep();
+  const match = progressBarText.match(/\d+/g);
+  if (!match || match.length < 2) {
+    return false; // Invalid progress bar text
+  }
+
+  const currentStep = parseInt(match[0], 10); // Current step
+  const totalSteps = parseInt(match[1], 10); // Total steps
+
+  return currentStep === totalSteps;
+}

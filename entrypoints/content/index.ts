@@ -9,6 +9,7 @@ import { getSaveButtonId } from "@/utils/aiUtil";
 import {
   calculateOverallPercentage,
   getProgressBarStep,
+  isLastStep,
 } from "@/utils/progressUtils";
 
 let maxRetryCountForCurrentPage = 3;
@@ -68,15 +69,11 @@ async function analyzeFieldsets(hasError: boolean = false): Promise<void> {
 
       if (
         !legendInputElement ||
-        !shouldProcessInput(legendInputElement, hasError)
+        !shouldProcessInput(legendInputElement, hasError, true)
       )
         continue;
 
-      if (
-        legendInputElement.getAttribute("data-uxi-widget-type") === "radioGroup"
-      ) {
-        await handleRadioGroupInput(legendInputElement, legendText);
-      }
+      await processInputElement(legendInputElement, legendText);
 
       if (!hasError) {
         progressOnCurrentPage = 100;
@@ -103,11 +100,14 @@ async function processDateInputs() {
  */
 function shouldProcessInput(
   inputElement: HTMLElement,
-  hasError: boolean
+  hasError: boolean,
+  isFieldset: boolean = false
 ): boolean {
   return (
     !!inputElement &&
-    (!hasError || inputElement.getAttribute("aria-invalid") === "true")
+    (!hasError ||
+      inputElement.getAttribute("aria-invalid") === "true" ||
+      isFieldset)
   );
 }
 
@@ -145,6 +145,9 @@ async function processInputElement(
  * Handles navigation to the next page and reanalyzes if errors are detected.
  */
 async function handleNavigation(): Promise<void> {
+  if (isLastStep()) {
+    return;
+  }
   if (maxRetryCountForCurrentPage <= 0) {
     maxRetryCountForCurrentPage = 3;
     throw new Error("Max retry count reached for the current page.");

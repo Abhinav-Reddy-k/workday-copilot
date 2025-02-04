@@ -32,25 +32,29 @@ export async function generateText(
   prompt: string,
   useResumeData: boolean = false
 ): Promise<string> {
-  const openai = await getOpenAI(); // Fetch the latest OpenAI client
-  const model = await getModel(); // Fetch the latest model
-  const temperature = parseFloat((await getData("temperature")) || "0.7");
+  try {
+    const openai = await getOpenAI(); // Fetch the latest OpenAI client
+    const model = await getModel(); // Fetch the latest model
+    const temperature = parseFloat((await getData("temperature")) || "0.7");
 
-  let fullPrompt = prompt;
+    let fullPrompt = prompt;
 
-  if (useResumeData) {
-    const savedData = await getData("userData");
-    const resumeData = `User's resume data: ${JSON.stringify(savedData)}`;
-    fullPrompt = `${resumeData}\n${prompt}`;
+    if (useResumeData) {
+      const savedData = await getData("userData");
+      const resumeData = `User's resume data: ${JSON.stringify(savedData)}`;
+      fullPrompt = `${resumeData}\n${prompt}`;
+    }
+
+    const response = await openai.completions.create({
+      model,
+      prompt: fullPrompt,
+      temperature,
+    });
+
+    return response.choices[0].text;
+  } catch (error) {
+    throw new Error(`Failed to connect to the llm server: ${error}`);
   }
-
-  const response = await openai.completions.create({
-    model,
-    prompt: fullPrompt,
-    temperature,
-  });
-
-  return response.choices[0].text;
 }
 
 function getAllButtonsData(): {
