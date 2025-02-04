@@ -257,7 +257,7 @@ const CustomMenu: React.FC<CustomMenuProps> = ({ darkMode }) => {
           <Paragraph style={footerStyle}>
             Made with <HeartFilled style={{ color: "#ff4d4f" }} /> by{" "}
             <a
-              href="https://abhinavreddy.web.app/#/"
+              href="https://www.linkedin.com/in/abhinav-reddy-k/"
               target="_blank"
               rel="noopener noreferrer"
               style={linkStyle}
