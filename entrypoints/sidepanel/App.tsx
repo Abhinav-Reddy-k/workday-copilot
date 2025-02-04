@@ -231,10 +231,10 @@ function App() {
         >
           <Card
             style={{
+              padding: "20px 20px 64px 20px",
               flex: 1,
               display: "flex",
               flexDirection: "column",
-              padding: 20,
               textAlign: "center",
               background: darkMode ? "#2d2e2e" : "#fff",
               color: darkMode ? "#fff" : "#000",

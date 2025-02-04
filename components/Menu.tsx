@@ -93,7 +93,7 @@ const CustomMenu: React.FC<CustomMenuProps> = ({ darkMode }) => {
   };
 
   const containerStyle: React.CSSProperties = {
-    padding: 24,
+    padding: "34px 34px 64px 34px",
     background: darkMode ? "#2d2e2e" : "#ffffff",
     boxShadow: darkMode
       ? "0 4px 12px rgba(0, 0, 0, 0.4)"
