@@ -507,6 +507,10 @@ const WorkdayCopilot = () => {
                                 ? "1px solid #434343"
                                 : undefined,
                               resize: "none",
+                              scrollbarWidth: "thin",
+                              scrollbarColor: darkMode
+                                ? "#9c9c9c #333"
+                                : "#adadad #f0f0f0",
                             }}
                           />
                           <div

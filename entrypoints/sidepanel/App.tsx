@@ -242,6 +242,8 @@ function App() {
               boxShadow: darkMode
                 ? "0 8px 24px rgba(0, 0, 0, 0.4)"
                 : "0 8px 24px rgba(0, 0, 0, 0.1)",
+              overflow: "auto",
+              scrollbarWidth: "none",
             }}
           >
             {/* Header */}
@@ -350,6 +352,10 @@ function App() {
                       background: darkMode ? "#1f1f1f" : "#fff",
                       color: darkMode ? "#fff" : "#000",
                       height: "100%",
+                      scrollbarWidth: "thin",
+                      scrollbarColor: darkMode
+                        ? "#9c9c9c #333"
+                        : "#adadad #f0f0f0",
                     }}
                   />
                   <Tooltip title="Full Screen">

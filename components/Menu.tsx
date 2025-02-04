@@ -98,6 +98,8 @@ const CustomMenu: React.FC<CustomMenuProps> = ({ darkMode }) => {
     boxShadow: darkMode
       ? "0 4px 12px rgba(0, 0, 0, 0.4)"
       : "0 4px 12px rgba(0, 0, 0, 0.1)",
+    overflow: "auto",
+    scrollbarWidth: "none",
   };
 
   const headerStyle: React.CSSProperties = {
