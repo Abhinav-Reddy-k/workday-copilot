@@ -416,6 +416,11 @@ function App() {
                     style={{
                       color: darkMode ? "#fff" : "#000",
                     }}
+                    format={(percent) => (
+                      <span style={{ color: darkMode ? "#fff" : "#000" }}>
+                        {percent}%
+                      </span>
+                    )}
                   />
                 </>
               )}
@@ -431,7 +436,9 @@ function App() {
                     }}
                     onInit={(typewriter) => {
                       // Start typing the current state value
-                      typewriter.typeString(action + "\n" + reason).start();
+                      typewriter
+                        .typeString(action + "\n" + reason?.substring(0, 300))
+                        .start();
                     }}
                   />
                 </>

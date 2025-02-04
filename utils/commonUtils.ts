@@ -13,7 +13,7 @@ export function delay(ms: number) {
 export async function simulateTyping(
   inputElement: HTMLInputElement,
   text: string,
-  delay = 200
+  typingDelay = 200
 ) {
   inputElement.value = "";
 
@@ -40,15 +40,17 @@ export async function simulateTyping(
     inputElement.dispatchEvent(keyupEvent);
 
     // Wait for the specified delay
-    await new Promise((resolve) => setTimeout(resolve, delay));
+    await new Promise((resolve) => setTimeout(resolve, typingDelay));
   }
   inputElement.dispatchEvent(new Event("change", { bubbles: true }));
 
   // Simulate leaving the field after typing
   inputElement.focus();
+  inputElement.click();
   inputElement.blur();
   inputElement.click();
   inputElement.focus();
+  inputElement.click();
   inputElement.blur();
 }
 
