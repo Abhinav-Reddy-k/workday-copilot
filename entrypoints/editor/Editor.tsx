@@ -62,26 +62,25 @@ const exampleVoluntaryDisclosures = `Race/Ethnicity:
   A1: No
   Q2: What is your race? (Select all that apply)
   A2: Asian
-  Q3: Do you wish to decline to provide this information?
-  A3: No
 
 Gender:
   Q1: What is your gender?
-  A1: Male
-  Q2: Do you wish to decline to provide this information?
-  A2: No`;
+  A1: Male`;
 
-const exampleSelfIdentify = `Veteran Status:
-  Q1: Do you identify as a veteran?
-  A1: No, I,m not a protected veteran
-  Q3: Do you wish to decline to provide this information?
-  A3: No
-
-Disability Status:
-  Q1: Do you have a disability (or a history of a disability)?
-  A1: No
-  Q2: Do you wish to decline to provide this information?
-  A2: Yes`;
+const exampleSelfIdentify = `Eligibility to Work
+Are you legally authorized to work in the United States?
+Answer: Yes, I am authorized to work in the United States under F1 OPT status. However, I will require sponsorship in the future to maintain work authorization.
+Do you require sponsorship now or in the future to work in the United States?
+Answer: Yes, I will require sponsorship in the future to work in the United States.
+Willing to Relocate?
+Answer: Yes, I am open to relocation within the United States.
+Veteran Status
+Are you a veteran?
+Answer: No.I am not a protected veteran.
+Disability Status
+Do you have a disability?
+Answer: No, I do not have a disability and have not had one in the past
+`;
 
 const WorkdayCopilot = () => {
   const [sections, setSections] = useState<SectionState>({
