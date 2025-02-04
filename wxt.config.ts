@@ -9,9 +9,17 @@ export default defineConfig({
     description:
       "An AI-powered assistant that automatically fills out job applications on Workday sites.",
     version: "1.0.0",
-    permissions: ["storage", "activeTab", "downloads"],
+    permissions: [
+      "storage",
+      "activeTab",
+      "downloads",
+      "sidePanel",
+      "tabs",
+      "scripting",
+    ],
     action: {
       default_title: "WXT",
     },
+    host_permissions: ["http://localhost/ *", "https://*.myworkdayjobs.com/*"],
   },
 });

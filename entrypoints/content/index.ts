@@ -61,6 +61,8 @@ async function analyzeFieldsets(hasError: boolean = false): Promise<void> {
       fieldset.querySelectorAll<HTMLLegendElement>("legend")
     );
 
+    const fieldsetHasError = !!fieldset.getAttribute("aria-invalid");
+
     for (const legend of legends) {
       const legendText = legend.textContent?.trim() || "";
       const legendInputId = legend.getAttribute("for");
@@ -69,7 +71,7 @@ async function analyzeFieldsets(hasError: boolean = false): Promise<void> {
 
       if (
         !legendInputElement ||
-        !shouldProcessInput(legendInputElement, hasError, true)
+        !shouldProcessInput(legendInputElement, hasError, fieldsetHasError)
       )
         continue;
 
@@ -101,13 +103,13 @@ async function processDateInputs() {
 function shouldProcessInput(
   inputElement: HTMLElement,
   hasError: boolean,
-  isFieldset: boolean = false
+  fieldsetHasError: boolean = false
 ): boolean {
   return (
     !!inputElement &&
     (!hasError ||
       inputElement.getAttribute("aria-invalid") === "true" ||
-      isFieldset)
+      fieldsetHasError)
   );
 }
 

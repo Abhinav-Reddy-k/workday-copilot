@@ -45,13 +45,15 @@ export async function simulateTyping(
   inputElement.dispatchEvent(new Event("change", { bubbles: true }));
 
   // Simulate leaving the field after typing
-  inputElement.focus();
-  inputElement.click();
-  inputElement.blur();
-  inputElement.click();
-  inputElement.focus();
-  inputElement.click();
-  inputElement.blur();
+  inputElement.dispatchEvent(new Event("blur", { bubbles: true }));
+  inputElement.dispatchEvent(new Event("focusout", { bubbles: true }));
+  inputElement.dispatchEvent(new Event("input", { bubbles: true }));
+  // focus and click and make it dirty
+  inputElement.dispatchEvent(new Event("focus", { bubbles: true }));
+  await delay(100);
+  inputElement.dispatchEvent(new Event("click", { bubbles: true }));
+  await delay(100);
+  inputElement.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
 export function getTextContentAbove(inputElement: HTMLInputElement): string {

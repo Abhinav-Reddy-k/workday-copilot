@@ -1,3 +1,3 @@
-export default defineBackground(async () => {
+export default defineBackground(() => {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 });

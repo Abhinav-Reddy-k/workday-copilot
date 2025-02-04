@@ -1,5 +1,5 @@
 import { generateText } from "@/utils/aiUtil";
-import { updateStatus } from "@/utils/commonUtils";
+import { updateStatus, simulateTyping } from "@/utils/commonUtils";
 
 type AIResponse = {
   reason: string;
