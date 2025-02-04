@@ -94,7 +94,7 @@ const CustomMenu: React.FC<CustomMenuProps> = ({ darkMode }) => {
 
   const containerStyle: React.CSSProperties = {
     padding: 24,
-    background: darkMode ? "#1f1f1f" : "#ffffff",
+    background: darkMode ? "#2d2e2e" : "#ffffff",
     boxShadow: darkMode
       ? "0 4px 12px rgba(0, 0, 0, 0.4)"
       : "0 4px 12px rgba(0, 0, 0, 0.1)",
@@ -109,7 +109,7 @@ const CustomMenu: React.FC<CustomMenuProps> = ({ darkMode }) => {
 
   const footerStyle: React.CSSProperties = {
     textAlign: "center",
-    marginTop: 24,
+    marginTop: 12,
     fontSize: 14,
     color: darkMode ? "#d9d9d9" : "#666666",
   };
@@ -236,11 +236,26 @@ const CustomMenu: React.FC<CustomMenuProps> = ({ darkMode }) => {
           </Form>
 
           {/* Footer */}
-          <Divider style={{ margin: "24px 0" }} />
+          <a
+            style={{
+              display: "flex",
+              justifyContent: "center",
+            }}
+            href="https://www.buymeacoffee.com/abhinavreddy"
+            target="_blank"
+          >
+            <img
+              src="https://cdn.buymeacoffee.com/buttons/v2/default-red.png"
+              alt="Buy Me A Coffee"
+              style={{ height: "30px", width: "120px" }}
+            />
+          </a>
+          <Divider style={{ margin: "10px 10px" }} />
+
           <Paragraph style={footerStyle}>
             Made with <HeartFilled style={{ color: "#ff4d4f" }} /> by{" "}
             <a
-              href="https://github.com/Abhinav-Reddy-k"
+              href="https://abhinavreddy.web.app/#/"
               target="_blank"
               rel="noopener noreferrer"
               style={linkStyle}

@@ -30,6 +30,7 @@ import { formatResume } from "@/utils/commonUtils";
 import Typewriter from "typewriter-effect";
 import CustomMenu from "../../components/Menu";
 import { BottomNav } from "../../components/BottomNav";
+import logo from "../../assets/ai-technology.png";
 
 const { Title } = Typography;
 
@@ -235,7 +236,7 @@ function App() {
               flexDirection: "column",
               padding: 20,
               textAlign: "center",
-              background: darkMode ? "#1e1e1e" : "#fff",
+              background: darkMode ? "#2d2e2e" : "#fff",
               color: darkMode ? "#fff" : "#000",
               border: "none",
               boxShadow: darkMode
@@ -252,10 +253,11 @@ function App() {
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center" }}>
                   <img
-                    src="https://img.icons8.com/?size=100&id=eoxMN35Z6JKg&format=png&color=000000"
+                    src={logo}
                     alt="Workday Copilot"
                     style={{ width: 30, height: 30, marginRight: 8 }}
                   />
+
                   <Title
                     level={4}
                     style={{
@@ -386,11 +388,14 @@ function App() {
               >
                 <Button
                   type="primary"
-                  danger
                   icon={<PlayCircleOutlined />}
                   onClick={handleStartAutofill}
                   block
                   disabled={isFilling}
+                  style={{
+                    background: isFilling ? "#79c1fc" : "#1677ff",
+                    color: "#fff",
+                  }}
                 >
                   Start Autofill
                 </Button>
@@ -407,6 +412,9 @@ function App() {
                     strokeColor={{
                       from: "#108ee9",
                       to: "#87d068",
+                    }}
+                    style={{
+                      color: darkMode ? "#fff" : "#000",
                     }}
                   />
                 </>

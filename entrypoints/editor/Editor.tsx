@@ -35,6 +35,7 @@ import {
 } from "@ant-design/icons";
 import { saveData, getData, clearData } from "@/utils/storageUtil";
 import { downloadTextFile } from "@/utils/fileUtil";
+import logo from "../../assets/ai-technology.png";
 
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
@@ -282,7 +283,7 @@ const WorkdayCopilot = () => {
       <Layout
         style={{
           minHeight: "100vh",
-          background: darkMode ? "#141414" : "#fff",
+          background: darkMode ? "#252626" : "#fff",
         }}
       >
         <motion.div
@@ -293,14 +294,14 @@ const WorkdayCopilot = () => {
         >
           <Layout
             style={{
-              background: darkMode ? "#141414" : "#fff",
+              background: darkMode ? "#252626" : "#fff",
               minHeight: "100vh",
               padding: "0.5rem",
             }}
           >
             <Content
               style={{
-                background: darkMode ? "#141414" : "#fff",
+                background: darkMode ? "#252626" : "#fff",
                 color: darkMode ? "#fff" : "#000",
               }}
             >
@@ -308,7 +309,7 @@ const WorkdayCopilot = () => {
               <Card
                 style={{
                   marginBottom: "0.5rem",
-                  backgroundColor: darkMode ? "#141414" : "#fff",
+                  backgroundColor: darkMode ? "#2d2e2e" : "#fff",
                   borderRadius: "8px",
                 }}
               >
@@ -322,7 +323,7 @@ const WorkdayCopilot = () => {
                   <div>
                     <div style={{ display: "flex", alignItems: "center" }}>
                       <img
-                        src="https://img.icons8.com/?size=100&id=eoxMN35Z6JKg&format=png&color=000000"
+                        src={logo}
                         alt="Workday Copilot"
                         style={{ width: 30, height: 30, marginRight: 8 }}
                       />
@@ -422,7 +423,7 @@ const WorkdayCopilot = () => {
                 >
                   <Card
                     style={{
-                      background: darkMode ? "#141414" : "#fff",
+                      background: darkMode ? "#2d2e2e" : "#fff",
                       borderRadius: "8px",
                       height: "100%",
                     }}
@@ -433,7 +434,7 @@ const WorkdayCopilot = () => {
                       selectedKeys={[activeSection]}
                       onClick={({ key }) => setActiveSection(key)}
                       style={{
-                        background: darkMode ? "#141414" : "#fff",
+                        background: darkMode ? "#2d2e2e" : "#fff",
                         color: darkMode ? "#fff" : "#000",
                       }}
                     >
@@ -471,7 +472,7 @@ const WorkdayCopilot = () => {
                           </Space>
                         }
                         style={{
-                          background: darkMode ? "#141414" : "#fff",
+                          background: darkMode ? "#2d2e2e" : "#fff",
                           borderRadius: "8px",
                           height: "100%",
                           display: "flex",
