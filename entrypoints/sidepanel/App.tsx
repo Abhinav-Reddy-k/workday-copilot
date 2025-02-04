@@ -231,7 +231,7 @@ function App() {
         >
           <Card
             style={{
-              padding: "20px 20px 64px 20px",
+              padding: "6px 13px 64px",
               flex: 1,
               display: "flex",
               flexDirection: "column",
