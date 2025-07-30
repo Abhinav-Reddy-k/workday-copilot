@@ -8,7 +8,8 @@ A Chrome extension built with WXT that automates Workday job application forms u
 
 ## 🎥 Demo
 
-[![Watch Demo Video](https://i9.ytimg.com/vi/hwBGkV02bbs/mq1.jpg?sqp=CMi8ir0G-oaymwEmCMACELQB8quKqQMa8AEB-AHUBoAC4AOKAgwIABABGHIgOSg7MA8=&rs=AOn4CLBCZmmkyK0CTbXpTX6tyjDRepVRKg)](https://youtu.be/hwBGkV02bbs?si=8f2deZHHWE3PXPU1)
+![Workday Copilot Promo](assets/big%20promo.png)
+![Workday Copilot Promo](assets/promo%20demo.png)
 
 ## 🌟 Features
 
@@ -110,6 +111,10 @@ workday-copilot/
 - 🎨 TailwindCSS
 - 🤖 Local LLM Integration
 - 📦 pnpm for package management
+
+![Promo Copilot](assets/promo%20copilot.png)
+
+![Promo Demo](assets/promo%20demo.png)
 
 ## 🤝 Contributing
 
